@@ -1,15 +1,16 @@
 import React, { useEffect } from "react";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { ContextProvider } from "./Context";
-import LandingPage from "./pages/LandingPage";
-import Lookup from "./pages/Lookup";
+// import LandingPage from "./pages/LandingPage";
+// import Lookup from "./pages/Lookup";
 import Verifier from "./pages/Verifier";
 
 function App() {
   useEffect(() => {
-    if (process.env.REACT_APP_TAG === "latest") {
-      document.title = "(staging) sourcify.eth";
-    }
+    // if (process.env.REACT_APP_TAG === "latest") {
+    //   document.title = "(staging) sourcify.eth";
+    // }
+    document.title = "Thora Verifier";
   }, []);
 
   return (
@@ -17,10 +18,11 @@ function App() {
       <ContextProvider>
         <HashRouter>
           <Routes>
-            <Route path="/verifier" element={<Verifier />} />
-            <Route path="/lookup" element={<Lookup />} />
-            <Route path="/lookup/:address" element={<Lookup />} />
-            <Route path="/" element={<LandingPage />} />
+            {/*<Route path="/verifier" element={<Verifier />} />*/}
+            {/*<Route path="/lookup" element={<Lookup />} />*/}
+            {/*<Route path="/lookup/:address" element={<Lookup />} />*/}
+            {/*<Route path="/" element={<LandingPage />} />*/}
+            <Route path="/" element={<Verifier />} />
           </Routes>
         </HashRouter>
       </ContextProvider>

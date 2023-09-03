@@ -5,7 +5,7 @@ import {
   CheckAllByAddressResult,
   SendableContract,
 } from "../../../../../types";
-import { generateRepoLink } from "../../../../../utils/utils";
+// import { generateRepoLink } from "../../../../../utils/utils";
 
 // Message displayed after each interaction inside the container
 type MessageProps = {
@@ -14,52 +14,54 @@ type MessageProps = {
   foundMatches: CheckAllByAddressResult | undefined;
 };
 
-type RepoLinkProps = {
-  chainIds: string[];
-  status: "perfect" | "partial";
-  address: string;
-  overrideLabel?: string;
-};
-const RepoLinks = ({
-  chainIds,
-  status,
-  address,
-  overrideLabel,
-}: RepoLinkProps) => {
-  const { sourcifyChainMap } = useContext(Context);
+// type RepoLinkProps = {
+//   chainIds: string[];
+//   status: "perfect" | "partial";
+//   address: string;
+//   overrideLabel?: string;
+// };
+// const RepoLinks = ({
+//   chainIds,
+//   status,
+//   address,
+//   overrideLabel,
+// }: RepoLinkProps) => {
+//   const { sourcifyChainMap } = useContext(Context);
+//
+//   return (
+//     <p>
+//       {status === "perfect" && !overrideLabel && (
+//         <>
+//           <b>Fully verified</b> at{" "}
+//         </>
+//       )}
+//       {status === "partial" && !overrideLabel && (
+//         <>
+//           <b>Partially verified</b> at{" "}
+//         </>
+//       )}
+//       {chainIds.map((chainId, i) => {
+//         return (
+//           <span>
+//             {i > 0 && ", "}
+//             <a
+//               href={generateRepoLink(chainId, address, status)}
+//               className="underline"
+//               key={`${address}-${chainId}-repo-link`}
+//             >
+//               {overrideLabel ||
+//                 sourcifyChainMap[parseInt(chainId)].title ||
+//                 sourcifyChainMap[parseInt(chainId)].name}{" "}
+//               (#{chainId})
+//             </a>
+//           </span>
+//         );
+//       })}
+//     </p>
+//   );
+// };
 
-  return (
-    <p>
-      {status === "perfect" && !overrideLabel && (
-        <>
-          <b>Fully verified</b> at{" "}
-        </>
-      )}
-      {status === "partial" && !overrideLabel && (
-        <>
-          <b>Partially verified</b> at{" "}
-        </>
-      )}
-      {chainIds.map((chainId, i) => {
-        return (
-          <span>
-            {i > 0 && ", "}
-            <a
-              href={generateRepoLink(chainId, address, status)}
-              className="underline"
-              key={`${address}-${chainId}-repo-link`}
-            >
-              {overrideLabel ||
-                sourcifyChainMap[parseInt(chainId)].title ||
-                sourcifyChainMap[parseInt(chainId)].name}{" "}
-              (#{chainId})
-            </a>
-          </span>
-        );
-      })}
-    </p>
-  );
-};
+
 const Message = ({
   customStatus,
   foundMatches,
@@ -91,14 +93,14 @@ const Message = ({
           </span>{" "}
           verified at <b>{chain.title || chain.name}</b>:
           {checkedContract.address}
-          {checkedContract?.address && (
-            <RepoLinks
-              chainIds={[chain.chainId.toString()]}
-              status={customStatus}
-              overrideLabel="View in repository"
-              address={checkedContract.address}
-            />
-          )}
+          {/*{checkedContract?.address && (*/}
+          {/*  <RepoLinks*/}
+          {/*    chainIds={[chain.chainId.toString()]}*/}
+          {/*    status={customStatus}*/}
+          {/*    overrideLabel="View in repository"*/}
+          {/*    address={checkedContract.address}*/}
+          {/*  />*/}
+          {/*)}*/}
         </p>
       </div>
     );
@@ -149,22 +151,25 @@ const Message = ({
         className={`bg-ceruleanBlue-200 px-4 py-2 rounded-md outline-2 outline-ceruleanBlue-300 outline text-ceruleanBlue-800`}
       >
         <p className="break-all">
-          Contract <b>{foundMatches.address}</b> is already verified:
+          Contract <b>{foundMatches.address}</b> is already verified!
         </p>
-        {perfectMatchChainIds.length > 0 && (
-          <RepoLinks
-            chainIds={perfectMatchChainIds}
-            status="perfect"
-            address={foundMatches.address}
-          />
-        )}
-        {partialMatchChainIds.length > 0 && (
-          <RepoLinks
-            chainIds={partialMatchChainIds}
-            status="partial"
-            address={foundMatches.address}
-          />
-        )}
+        {/*<p className="break-all">*/}
+        {/*  Contract <b>{foundMatches.address}</b> is already verified:*/}
+        {/*</p>*/}
+        {/*{perfectMatchChainIds.length > 0 && (*/}
+        {/*  <RepoLinks*/}
+        {/*    chainIds={perfectMatchChainIds}*/}
+        {/*    status="perfect"*/}
+        {/*    address={foundMatches.address}*/}
+        {/*  />*/}
+        {/*)}*/}
+        {/*{partialMatchChainIds.length > 0 && (*/}
+        {/*  <RepoLinks*/}
+        {/*    chainIds={partialMatchChainIds}*/}
+        {/*    status="partial"*/}
+        {/*    address={foundMatches.address}*/}
+        {/*  />*/}
+        {/*)}*/}
       </div>
     );
   }

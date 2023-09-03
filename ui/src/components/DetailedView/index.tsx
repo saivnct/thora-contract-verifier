@@ -93,10 +93,8 @@ const DetailedView = ({
                             </h4>
                             <p>{files.missing[filePath].keccak256}</p>
                             <h4 className="font-bold">File URLs:</h4>
-                            {files.missing[filePath].urls.map((url, i) => (
-                              <>
-                                <p key={`${url}-${i}`}>{url}</p>
-                              </>
+                            {files.missing[filePath].urls.map((url, j) => (
+                                <p key={`${url}-${j}`}>{url}</p>
                             ))}
                           </div>
                         </li>

@@ -17,13 +17,13 @@ import {
   SessionResponse,
   VerificationInput,
 } from "../../../../../types";
-import { checkAllByAddresses } from "../../../../../utils/api";
+// import { checkAllByAddresses } from "../../../../../utils/api";
 import Message from "./Message";
 import { HiChevronDown } from "react-icons/hi";
 import ReactTooltip from "react-tooltip";
 import { SelectedOptionValue } from "react-select-search";
 /* import Constructorarguments from "../../../../../components/ConstructorArguments";
-import InputToggle from "../../../../../components/InputToggle"; */
+// import InputToggle from "../../../../../components/InputToggle"; */
 
 type ChainAddressFormProps = {
   customStatus: string;
@@ -83,16 +83,18 @@ const ChainAddressForm = ({
       return setIsInvalidAddress(true);
     }
 
-    checkAllByAddresses(
-      checksummedAddress,
-      sourcifyChains.map((c) => c.chainId.toString()).join(",")
-    ).then((res) => {
-      // checkAllByAddresses inputs and outptus multiple addresses.
-      const currentAddressMatches = res.find(
-        (match) => (match.address = checksummedAddress)
-      );
-      setFoundMatches(currentAddressMatches);
-    });
+    // checkAllByAddresses(
+    //   checksummedAddress,
+    //   sourcifyChains.map((c) => c.chainId.toString()).join(",")
+    // ).then((res) => {
+    //   // checkAllByAddresses inputs and outptus multiple addresses.
+    //   const currentAddressMatches = res.find(
+    //     (match) => (match.address = checksummedAddress)
+    //   );
+    //   setFoundMatches(currentAddressMatches);
+    // });
+
+
   };
 
   const handleChainIdChange = (
