@@ -380,94 +380,105 @@ export class RepositoryService implements IRepositoryService {
   public async storeMatch(
     contract: CheckedContract,
     match: Match
+
   ): Promise<void | Match> {
     if (
       match.address &&
       (match.status === "perfect" || match.status === "partial")
     ) {
-      // Delete the partial matches if we now have a perfect match instead.
-      if (match.status === "perfect") {
-        this.deletePartialIfExists(match.chainId, match.address);
-      }
       const matchQuality = this.statusToMatchQuality(match.status);
-      this.storeSources(
-        matchQuality,
-        match.chainId,
-        match.address,
-        contract.solidity
-      );
 
-      // Store metadata
-      this.storeJSON(
-        matchQuality,
-        match.chainId,
-        match.address,
-        "metadata.json",
-        contract.metadata
-      );
+      if (config.storingMode === "local"){
+        // Delete the partial matches if we now have a perfect match instead.
+        if (match.status === "perfect") {
+          this.deletePartialIfExists(match.chainId, match.address);
+        }
 
-      if (match.abiEncodedConstructorArguments) {
-        this.storeTxt(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "constructor-args.txt",
-          match.abiEncodedConstructorArguments
+        this.storeSources(
+            matchQuality,
+            match.chainId,
+            match.address,
+            contract.solidity
         );
-      }
 
-      /* if (
-        match.contextVariables &&
-        Object.keys(match.contextVariables).length > 0
-      ) {
+        // Store metadata
         this.storeJSON(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "context-variables.json",
-          match.contextVariables
+            matchQuality,
+            match.chainId,
+            match.address,
+            "metadata.json",
+            contract.metadata
         );
-      } */
 
-      if (match.creatorTxHash) {
-        this.storeTxt(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "creator-tx-hash.txt",
-          match.creatorTxHash
-        );
+        if (match.abiEncodedConstructorArguments) {
+          this.storeTxt(
+              matchQuality,
+              match.chainId,
+              match.address,
+              "constructor-args.txt",
+              match.abiEncodedConstructorArguments
+          );
+        }
+
+        /* if (
+          match.contextVariables &&
+          Object.keys(match.contextVariables).length > 0
+        ) {
+          this.storeJSON(
+            matchQuality,
+            match.chainId,
+            match.address,
+            "context-variables.json",
+            match.contextVariables
+          );
+        } */
+
+        if (match.creatorTxHash) {
+          this.storeTxt(
+              matchQuality,
+              match.chainId,
+              match.address,
+              "creator-tx-hash.txt",
+              match.creatorTxHash
+          );
+        }
+
+        if (match.create2Args) {
+          this.storeJSON(
+              matchQuality,
+              match.chainId,
+              match.address,
+              "create2-args.json",
+              match.create2Args
+          );
+        }
+
+        if (match.libraryMap && Object.keys(match.libraryMap).length) {
+          this.storeJSON(
+              matchQuality,
+              match.chainId,
+              match.address,
+              "library-map.json",
+              match.libraryMap
+          );
+        }
+
+        if (match.immutableReferences) {
+          this.storeJSON(
+              matchQuality,
+              match.chainId,
+              match.address,
+              "immutable-references.json",
+              match.immutableReferences
+          );
+        }
+      }
+      else{
+        //TODO - IMPLEMENT SAVE TO POSTGRES
       }
 
-      if (match.create2Args) {
-        this.storeJSON(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "create2-args.json",
-          match.create2Args
-        );
-      }
 
-      if (match.libraryMap && Object.keys(match.libraryMap).length) {
-        this.storeJSON(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "library-map.json",
-          match.libraryMap
-        );
-      }
 
-      if (match.immutableReferences) {
-        this.storeJSON(
-          matchQuality,
-          match.chainId,
-          match.address,
-          "immutable-references.json",
-          match.immutableReferences
-        );
-      }
 
       await this.addToIpfsMfs(matchQuality, match.chainId, match.address);
       SourcifyEventManager.trigger("Verification.MatchStored", match);

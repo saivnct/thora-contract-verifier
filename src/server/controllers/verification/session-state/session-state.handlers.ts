@@ -24,6 +24,8 @@ import { services } from "../../../services/services";
 import { StatusCodes } from "http-status-codes";
 import { decode as bytecodeDecode } from "@ethereum-sourcify/bytecode-utils";
 
+import { logger } from "../../../../common/loggerLoki";
+
 export async function getSessionDataEndpoint(req: Request, res: Response) {
   res.send(getSessionJSON(req.session));
 }
@@ -42,6 +44,10 @@ export async function addInputFilesEndpoint(req: Request, res: Response) {
 
   const session = req.session;
   const newFilesCount = saveFiles(pathContents, session);
+  logger.debug({
+    labels: { event: "addInputFilesEndpoint", level: "debug" },
+    message: `new Files: ${newFilesCount}`,
+  });
   if (newFilesCount) {
     await checkContractsInSession(session);
     await verifyContractsInSession(

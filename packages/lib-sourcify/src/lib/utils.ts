@@ -1,4 +1,5 @@
 import { logWarn } from './logger';
+
 require('isomorphic-fetch');
 
 interface RequestInitTimeout extends RequestInit {
@@ -13,7 +14,7 @@ export async function fetchWithTimeout(
 
   const controller = new AbortController();
   const id = setTimeout(() => {
-    logWarn(`Aborting request ${resource} because of timout ${timeout}`);
+    logWarn(`Aborting request ${resource} because of timeout ${timeout}`);
     controller.abort();
   }, timeout);
   const response = await fetch(resource, {

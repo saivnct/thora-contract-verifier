@@ -29,6 +29,7 @@ import config from "../../../config";
 import { id as keccak256str } from "ethers";
 import { ForbiddenError } from "../../../common/errors/ForbiddenError";
 import { UnauthorizedError } from "../../../common/errors/UnauthorizedError";
+import { logger } from "../../../common/loggerLoki";
 
 type PathBuffer = {
   path: string;
@@ -322,8 +323,21 @@ export const verifyContractsInSession = async (
     await checkAndFetchMissing(contractWrapper.contract);
 
     if (!isVerifiable(contractWrapper)) {
+      logger.debug({
+        labels: { event: `verifyContractsInSession - isVerifiable false`, level: "debug" },
+        message: `
+        id ${id}
+        missing ${isEmpty(contractWrapper.contract.missing)}
+        invalid ${isEmpty(contractWrapper.contract.invalid)}
+        address ${Boolean(contractWrapper.address)}
+        chainId ${Boolean(contractWrapper.chainId)}
+        `,
+      });
       continue;
     }
+    logger.debug({
+      labels: { event: `verifyContractsInSession - isVerifiable true`, level: "debug" },
+    });
 
     const {
       address,
