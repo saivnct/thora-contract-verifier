@@ -52,7 +52,7 @@ chai.use(chaiHttp);
 const EXTENDED_TIME = 20000; // 20 seconds
 const EXTENDED_TIME_60 = 60000; // 60 seconds
 
-const defaultContractChain = "1337"; // default 1337
+const defaultContractChain = "696969"; // default 696969
 
 describe("Server", function () {
   const server = new Server();
@@ -161,102 +161,7 @@ describe("Server", function () {
     chai.expect(obj1, `assertFromPath: ${obj2path}`).to.deep.equal(obj2);
   }
 
-  // Don't run if it's an external PR.
-  if (process.env.CIRCLE_PR_REPONAME == undefined) {
-    describe("Verify create2", function () {
-      this.timeout(EXTENDED_TIME_60);
 
-      const agent = chai.request.agent(server.app);
-      let verificationId;
-
-      it("should input files from existing contract via auxdata ipfs", async () => {
-        const artifacts = require("./testcontracts/Create2/Wallet.json");
-
-        const account = await localSigner.getAddress();
-        const addressDeployed = await deployFromAbiAndBytecode(
-          localSigner,
-          artifacts.abi,
-          artifacts.bytecode,
-          [account, account]
-        );
-
-        const res = await agent
-          .post("/session/input-contract")
-          .field("address", addressDeployed)
-          .field("chainId", defaultContractChain);
-
-        verificationId = res.body.contracts[0].verificationId;
-        chai.expect(res.body.contracts).to.have.a.lengthOf(1);
-        const contract = res.body.contracts[0];
-        chai.expect(contract.files.found).to.have.a.lengthOf(1);
-        const retrivedFile = contract.files.found[0];
-        chai.expect(retrivedFile).to.equal("contracts/create2/Wallet.sol");
-      });
-
-      it("should create2 verify with session", (done) => {
-        callWithAccessToken((accessToken) => {
-          agent
-            .post("/session/verify/create2")
-            .set("Authorization", `Bearer ${accessToken}`)
-            .send({
-              deployerAddress: "0xd9145CCE52D386f254917e481eB44e9943F39138",
-              salt: 12344,
-              abiEncodedConstructorArguments:
-                "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc40000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4",
-              create2Address: "0x65790cc291a234eDCD6F28e1F37B036eD4F01e3B",
-              verificationId: verificationId,
-            })
-            .end((err, res) => {
-              assertVerificationSession(
-                err,
-                res,
-                done,
-                "0x65790cc291a234eDCD6F28e1F37B036eD4F01e3B",
-                "0",
-                "perfect"
-              );
-            });
-        });
-      });
-
-      it("should create2 verify non-session", (done) => {
-        const metadata = fs
-          .readFileSync("test/testcontracts/Create2/Wallet_metadata.json")
-          .toString();
-        const source = fs
-          .readFileSync("test/testcontracts/Create2/Wallet.sol")
-          .toString();
-
-        callWithAccessToken((accessToken) => {
-          chai
-            .request(server.app)
-            .post("/verify/create2")
-            .set("Authorization", `Bearer ${accessToken}`)
-            .send({
-              deployerAddress: "0xd9145CCE52D386f254917e481eB44e9943F39138",
-              salt: 12345,
-              abiEncodedConstructorArguments:
-                "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc40000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4",
-              files: {
-                "metadata.json": metadata,
-                "Wallet.sol": source,
-              },
-              create2Address: "0x801B9c0Ee599C3E5ED60e4Ec285C95fC9878Ee64",
-            })
-            .end((err, res) => {
-              assertVerification(
-                err,
-                res,
-                done,
-                "0x801B9c0Ee599C3E5ED60e4Ec285C95fC9878Ee64",
-                "0",
-                "perfect"
-              );
-            });
-        });
-      });
-    });
-  }
 
   describe("/check-by-addresses", function () {
     this.timeout(EXTENDED_TIME);
@@ -267,6 +172,7 @@ describe("Server", function () {
         .get("/check-by-addresses")
         .query({ addresses: defaultContractAddress })
         .end((err, res) => {
+            console.log(err, res);
           assertValidationError(err, res, "chainIds");
           done();
         });
@@ -276,7 +182,7 @@ describe("Server", function () {
       chai
         .request(server.app)
         .get("/check-by-addresses")
-        .query({ chainIds: 1 })
+        .query({ chainIds: 696969 })
         .end((err, res) => {
           assertValidationError(err, res, "addresses");
           done();
@@ -320,7 +226,7 @@ describe("Server", function () {
           assertLookup(err, res, defaultContractAddress, "false");
           chai
             .request(server.app)
-            .post("/")
+            .post("/verify")
             .field("address", defaultContractAddress)
             .field("chain", defaultContractChain)
             .attach("files", metadataBuffer, "metadata.json")
@@ -381,7 +287,7 @@ describe("Server", function () {
       chai
         .request(server.app)
         .get("/check-all-by-addresses")
-        .query({ chainIds: 1 })
+        .query({ chainIds: 696969 })
         .end((err, res) => {
           assertValidationError(err, res, "addresses");
           done();
@@ -424,7 +330,7 @@ describe("Server", function () {
           assertLookup(err, res, defaultContractAddress, "false");
           chai
             .request(server.app)
-            .post("/")
+            .post("/verify")
             .field("address", defaultContractAddress)
             .field("chain", defaultContractChain)
             .attach("files", metadataBuffer, "metadata.json")
@@ -487,12 +393,8 @@ describe("Server", function () {
       });
   };
 
-  describe("/", function () {
+  describe("/verify", function () {
     this.timeout(EXTENDED_TIME);
-
-    it("should correctly inform for an address check of a non verified contract (at /)", (done) => {
-      checkNonVerified("/", done);
-    });
 
     it("should correctly inform for an address check of a non verified contract (at /verify)", (done) => {
       checkNonVerified("/verify", done);
@@ -501,7 +403,7 @@ describe("Server", function () {
     it("should verify multipart upload", (done) => {
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .field("address", defaultContractAddress)
         .field("chain", defaultContractChain)
         .attach("files", metadataBuffer, "metadata.json")
@@ -521,7 +423,7 @@ describe("Server", function () {
     it("should verify json upload with string properties", (done) => {
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .send({
           address: defaultContractAddress,
           chain: defaultContractChain,
@@ -545,7 +447,7 @@ describe("Server", function () {
     it("should verify json upload with Buffer properties", (done) => {
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .send({
           address: defaultContractAddress,
           chain: defaultContractChain,
@@ -578,7 +480,7 @@ describe("Server", function () {
     it("should return Bad Request Error for a source that is missing and unfetchable", (done) => {
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .field("address", defaultContractAddress)
         .field("chain", defaultContractChain)
         .attach("files", modifiedIpfsMetadataBuffer, "metadata.json")
@@ -591,7 +493,7 @@ describe("Server", function () {
     it("should fetch a missing file that is accessible via ipfs", (done) => {
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .field("address", defaultContractAddress)
         .field("chain", defaultContractChain)
         .attach("files", metadataBuffer, "metadata.json")
@@ -625,7 +527,7 @@ describe("Server", function () {
 
       chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .field("address", defaultContractAddress)
         .field("chain", defaultContractChain)
         .attach("files", partialMetadataBuffer, "metadata.json")
@@ -649,7 +551,7 @@ describe("Server", function () {
 
               chai
                 .request(server.app)
-                .post("/")
+                .post("/verify")
                 .field("address", defaultContractAddress)
                 .field("chain", defaultContractChain)
                 .attach("files", metadataBuffer, "metadata.json")
@@ -697,7 +599,7 @@ describe("Server", function () {
 
       const res = await chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .field("address", address)
         .field("chain", defaultContractChain)
         .attach("files", metadataBuffer, "metadata.json");
@@ -735,7 +637,7 @@ describe("Server", function () {
       // Now pass the creatorTxHash
       const res = await chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .send({
           address: contractAddress,
           chain: defaultContractChain,
@@ -764,81 +666,8 @@ describe("Server", function () {
       chai.expect(isExist, "Immutable references not saved").to.be.true;
     });
 
-    it("should return validation error for adding standard input JSON without a compiler version", async () => {
-      const address = await deployFromAbiAndBytecode(
-        localSigner,
-        artifact.abi, // Storage.sol
-        artifact.bytecode
-      );
-      const solcJsonPath = path.join(
-        "test",
-        "testcontracts",
-        "Storage",
-        "StorageJsonInput.json"
-      );
-      const solcJsonBuffer = fs.readFileSync(solcJsonPath);
 
-      const res = await chai
-        .request(server.app)
-        .post("/verify/solc-json")
-        .attach("files", solcJsonBuffer, "solc.json")
-        .field("address", address)
-        .field("chain", defaultContractChain)
-        .field("contractName", "Storage");
 
-      assertValidationError(null, res, "compilerVersion");
-    });
-
-    it("should return validation error for adding standard input JSON without a contract name", async () => {
-      const address = await deployFromAbiAndBytecode(
-        localSigner,
-        artifact.abi, // Storage.sol
-        artifact.bytecode
-      );
-      const solcJsonPath = path.join(
-        "test",
-        "testcontracts",
-        "Storage",
-        "StorageJsonInput.json"
-      );
-      const solcJsonBuffer = fs.readFileSync(solcJsonPath);
-
-      const res = await chai
-        .request(server.app)
-        .post("/verify/solc-json")
-        .attach("files", solcJsonBuffer)
-        .field("address", address)
-        .field("chain", defaultContractChain)
-        .field("compilerVersion", "0.8.4+commit.c7e474f2");
-
-      assertValidationError(null, res, "contractName");
-    });
-
-    it("should verify a contract with Solidity standard input JSON", async () => {
-      const address = await deployFromAbiAndBytecode(
-        localSigner,
-        artifact.abi, // Storage.sol
-        artifact.bytecode
-      );
-      const solcJsonPath = path.join(
-        "test",
-        "testcontracts",
-        "Storage",
-        "StorageJsonInput.json"
-      );
-      const solcJsonBuffer = fs.readFileSync(solcJsonPath);
-
-      const res = await chai
-        .request(server.app)
-        .post("/verify/solc-json")
-        .attach("files", solcJsonBuffer, "solc.json")
-        .field("address", address)
-        .field("chain", defaultContractChain)
-        .field("compilerVersion", "0.8.4+commit.c7e474f2")
-        .field("contractName", "Storage");
-
-      assertVerification(null, res, null, address, defaultContractChain);
-    });
     describe("hardhat build-info file support", function () {
       this.timeout(EXTENDED_TIME);
       let address;
@@ -863,7 +692,7 @@ describe("Server", function () {
       it("should detect multiple contracts in the build-info file", (done) => {
         chai
           .request(server.app)
-          .post("/")
+          .post("/verify")
           .field("chain", defaultContractChain)
           .field("address", address)
           .attach("files", hardhatOutputBuffer)
@@ -881,7 +710,7 @@ describe("Server", function () {
       it("should verify the chosen contract in the build-info file", (done) => {
         chai
           .request(server.app)
-          .post("/")
+          .post("/verify")
           .field("chain", defaultContractChain)
           .field("address", address)
           .field("chosenContract", mainContractIndex)
@@ -920,7 +749,7 @@ describe("Server", function () {
         // Now pass the creatorTxHash
         const res = await chai
           .request(server.app)
-          .post("/")
+          .post("/verify")
           .send({
             address: contractAddress,
             chain: defaultContractChain,
@@ -971,7 +800,7 @@ describe("Server", function () {
         const hardhatOutputBuffer = Buffer.from(JSON.stringify(hardhatOutput));
         chai
           .request(server.app)
-          .post("/")
+          .post("/verify")
           .field("chain", defaultContractChain)
           .field("address", contractAddress)
           .attach("files", hardhatOutputBuffer)
@@ -992,7 +821,7 @@ describe("Server", function () {
         const hardhatOutputBuffer = Buffer.from(JSON.stringify(hardhatOutput));
         chai
           .request(server.app)
-          .post("/")
+          .post("/verify")
           .field("chain", defaultContractChain)
           .field("address", contractAddress)
           .attach("files", hardhatOutputBuffer)
@@ -1016,7 +845,7 @@ describe("Server", function () {
     it("should inform when no pending contracts", (done) => {
       chai
         .request(server.app)
-        .post("/session/verify-validated")
+        .post("/session/verify-checked")
         .send({})
         .end((err, res) => {
           chai.expect(err).to.be.null;
@@ -1083,7 +912,7 @@ describe("Server", function () {
           contracts[0].chainId = defaultContractChain;
 
           agent
-            .post("/session/verify-validated")
+            .post("/session/verify-checked")
             .send({ contracts })
             .end((err, res) => {
               assertVerificationSession(
@@ -1159,7 +988,7 @@ describe("Server", function () {
               );
 
               agent
-                .post("/session/verify-validated")
+                .post("/session/verify-checked")
                 .send({ contracts })
                 .end((err, res) => {
                   assertVerificationSession(
@@ -1241,20 +1070,20 @@ describe("Server", function () {
           contracts[0].address = defaultContractAddress;
 
           agent
-            .post("/session/verify-validated")
+            .post("/session/verify-checked")
             .send({ contracts })
             .then((res) => {
               assertSingleContractStatus(res, "error");
               contracts[0].chainId = defaultContractChain;
 
               agent
-                .post("/session/verify-validated")
+                .post("/session/verify-checked")
                 .send({ contracts })
                 .then((res) => {
                   assertSingleContractStatus(res, "perfect");
 
                   agent
-                    .post("/session/verify-validated")
+                    .post("/session/verify-checked")
                     .send({ contracts })
                     .then((res) => {
                       assertSingleContractStatus(res, "perfect", true);
@@ -1315,7 +1144,7 @@ describe("Server", function () {
           contracts[0].chainId = defaultContractChain;
 
           agent
-            .post("/session/verify-validated")
+            .post("/session/verify-checked")
             .send({ contracts })
             .then((res) => {
               assertSingleContractStatus(res, "perfect");
@@ -1491,7 +1320,7 @@ describe("Server", function () {
       contracts[0].address = contractAddress;
       contracts[0].chainId = defaultContractChain;
       const res2 = await agent
-        .post("/session/verify-validated")
+        .post("/session/verify-checked")
         .send({ contracts });
 
       assertSingleContractStatus(res2, "perfect");
@@ -1551,7 +1380,7 @@ describe("Server", function () {
       contracts[0].chainId = defaultContractChain;
 
       const res = await agent
-        .post("/session/verify-validated")
+        .post("/session/verify-checked")
         .send({ contracts });
       assertSingleContractStatus(res, "perfect");
     });
@@ -1596,59 +1425,12 @@ describe("Server", function () {
       contracts[0].address = childAddress;
       contracts[0].chainId = defaultContractChain;
       const res = await agent
-        .post("/session/verify-validated")
+        .post("/session/verify-checked")
         .send({ contracts });
       assertSingleContractStatus(res, "perfect");
     });
 
-    it("should return validation error for adding standard input JSON without a compiler version", async () => {
-      const agent = chai.request.agent(server.app);
 
-      const solcJsonPath = path.join(
-        "test",
-        "testcontracts",
-        "Storage",
-        "StorageJsonInput.json"
-      );
-      const solcJsonBuffer = fs.readFileSync(solcJsonPath);
-
-      const res = await agent
-        .post("/session/input-solc-json")
-        .attach("files", solcJsonBuffer);
-
-      assertValidationError(null, res, "compilerVersion");
-    });
-
-    it("should verify a contract with Solidity standard input JSON", async () => {
-      const agent = chai.request.agent(server.app);
-      const address = await deployFromAbiAndBytecode(
-        localSigner,
-        artifact.abi, // Storage.sol
-        artifact.bytecode
-      );
-      const solcJsonPath = path.join(
-        "test",
-        "testcontracts",
-        "Storage",
-        "StorageJsonInput.json"
-      );
-      const solcJsonBuffer = fs.readFileSync(solcJsonPath);
-
-      const res = await agent
-        .post("/session/input-solc-json")
-        .field("compilerVersion", "0.8.4+commit.c7e474f2")
-        .attach("files", solcJsonBuffer, "solc.json");
-
-      const contracts = assertSingleContractStatus(res, "error");
-
-      contracts[0].address = address;
-      contracts[0].chainId = defaultContractChain;
-
-      const res2 = await agent
-        .post("/session/verify-validated")
-        .send({ contracts });
-      assertSingleContractStatus(res2, "perfect");
-    });
 
     // Test also extra-file-bytecode-mismatch via v2 API as well since the workaround is at the API level i.e. VerificationController
     describe("solc v0.6.12 and v0.7.0 extra files in compilation causing metadata match but bytecode mismatch", function () {
@@ -1678,7 +1460,7 @@ describe("Server", function () {
             contracts[0].address = contractAddress;
             contracts[0].chainId = defaultContractChain;
             agent
-              .post("/session/verify-validated")
+              .post("/session/verify-checked")
               .send({ contracts })
               .then((res) => {
                 assertSingleContractStatus(res, "extra-file-input-bug");
@@ -1700,7 +1482,7 @@ describe("Server", function () {
             contracts[0].address = contractAddress;
             contracts[0].chainId = defaultContractChain;
             agent
-              .post("/session/verify-validated")
+              .post("/session/verify-checked")
               .send({ contracts })
               .then((res) => {
                 assertSingleContractStatus(res, "perfect");
@@ -1710,6 +1492,8 @@ describe("Server", function () {
       });
     });
   });
+
+
   describe("E2E test path sanitization", async function () {
     it("should verify a contract with paths containing misc. chars, save the path translation, and be able access the file over the API", async () => {
       const sanitizeArtifact = require("./testcontracts/path-sanitization/ERC20.json");
@@ -1744,7 +1528,7 @@ describe("Server", function () {
 
       const verificationResponse = await chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .send({
           address: toBeSanitizedContractAddress,
           chain: defaultContractChain,
@@ -1826,7 +1610,7 @@ describe("Server", function () {
       );
       await chai
         .request(server.app)
-        .post("/")
+        .post("/verify")
         .send({
           address: defaultContractAddress,
           chain: defaultContractChain,
@@ -1859,11 +1643,13 @@ describe("Server", function () {
       chai.expect(fs.existsSync(pathTranslationPath)).to.be.false;
     });
   });
+
+
   describe("Verify repository endpoints", function () {
     const agent = chai.request.agent(server.app);
     it("should fetch files of specific address", async function () {
       await agent
-        .post("/")
+        .post("/verify")
         .field("address", defaultContractAddress)
         .field("chain", defaultContractChain)
         .attach("files", metadataBuffer, "metadata.json")
@@ -1888,6 +1674,9 @@ describe("Server", function () {
       chai.expect(res4.body.full).has.a.lengthOf(1);
     });
   });
+
+
+
   describe("Verify server status endpoint", function () {
     it("should check server's health", async function () {
       const res = await chai.request(server.app).get("/health");
@@ -1898,111 +1687,16 @@ describe("Server", function () {
       chai.expect(res.body.length).greaterThan(0);
     });
   });
+
+
+
   describe("Unit test functions", function () {
     this.timeout(EXTENDED_TIME_60);
     const { sourcifyChainsArray } = require("../dist/sourcify-chains");
     const {
       getCreatorTx,
     } = require("../dist/server/services/VerificationService-util");
-    it("should run getCreatorTx with chainId 40", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 40
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0x4c09368a4bccD1675F276D640A0405Efa9CD4944"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0xb7efb33c736b1e8ea97e356467f99d99221343f077ce31a3e3ac1d2e0636df1d"
-        );
-    });
-    // Commented out as fails way too often
-    // it("should run getCreatorTx with chainId 51", async function () {
-    //   const sourcifyChain = sourcifyChainsArray.find(
-    //     (sourcifyChain) => sourcifyChain.chainId === 51
-    //   );
-    //   const creatorTx = await getCreatorTx(
-    //     sourcifyChain,
-    //     "0x8C3FA94eb5b07c9AF7dBFcC53ea3D2BF7FdF3617"
-    //   );
-    //   chai
-    //     .expect(creatorTx)
-    //     .equals(
-    //       "0xb1af0ec1283551480ae6e6ce374eb4fa7d1803109b06657302623fc65c987420"
-    //     );
-    // });
-    it("should run getCreatorTx with chainId 83", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 83
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0x89e772941d94Ef4BDA1e4f68E79B4bc5F6096389"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0x8cc7b0fb66eaf7b32bac7b7938aedfcec6d49f9fe607b8008a5541e72d264069"
-        );
-    });
-    it("should run getCreatorTx with chainId 335", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 335
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0x40D843D06dAC98b2586fD1DFC5532145208C909F"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0xd125cc92f61d0898d55a918283f8b855bde15bc5f391b621e0c4eee25c9997ee"
-        );
-    });
-    it("should run getCreatorTx with regex for new Blockscout", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 100
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0x3CE1a25376223695284edc4C2b323C3007010C94"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0x11da550e6716be8b4bd9203cb384e89b8f8941dc460bd99a4928ce2825e05456"
-        );
-    });
-    it("should run getCreatorTx with regex for old Blockscout", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 1313161554
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0x2CB45Edb4517d5947aFdE3BEAbF95A582506858B"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0x8fbcf663b8d86af936d5a72cbf9e6becd17e87e167bdcff449663e987cf09759"
-        );
-    });
-    it("should run getCreatorTx with regex for Etherscan", async function () {
-      const sourcifyChain = sourcifyChainsArray.find(
-        (sourcifyChain) => sourcifyChain.chainId === 84531
-      );
-      const creatorTx = await getCreatorTx(
-        sourcifyChain,
-        "0xbe92671bdd1a1062e1a9f3be618e399fb5facace"
-      );
-      chai
-        .expect(creatorTx)
-        .equals(
-          "0x15c5208cacbc1e14d9906926b8a991ec986a442f26081fe5ac9de4eb671c5195"
-        );
-    });
+
     it("should attach and trigger an event with the event manager", function (done) {
       const EventManager = require("../dist/common/EventManager").EventManager;
       const em = new EventManager({

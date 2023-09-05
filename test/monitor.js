@@ -170,7 +170,7 @@ describe("Monitor", function () {
   beforeEach(async () => {
     ganacheServer = ganache.server({
       wallet: { totalAccounts: 5 },
-      chain: { chainId: 1337, networkId: 1337 },
+      chain: { chainId: 696969, networkId: 696969 },
     });
     await ganacheServer.listen(GANACHE_PORT);
     console.log("Started ganache local server at port " + GANACHE_PORT);

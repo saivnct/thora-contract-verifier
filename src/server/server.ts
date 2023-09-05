@@ -182,49 +182,31 @@ export class Server {
     // if (
     //   process.env.NODE_ENV === "production" &&
     //   (process.env.TAG === "latest" || process.env.TAG === "stable")
-    // ) {
-    //   const limiter = rateLimit({
-    //     windowMs: 15 * 1000,
-    //     max: 3, // Requests per windowMs
-    //     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    //     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    //     message: {
-    //       error:
-    //         "You are sending too many verification requests, please slow down.",
-    //     },
-    //     keyGenerator: (req: any) => {
-    //       if (req.headers["x-forwarded-for"]) {
-    //         return req.headers["x-forwarded-for"].toString();
-    //       }
-    //       return req.ip;
-    //     },
-    //   });
-    //
-    //   this.app.all("/session/verify/*", limiter);
-    //   this.app.all("/verify*", limiter);
-    //   this.app.all("/", limiter);
-    // }
+    // )
 
-    const limiter = rateLimit({
-      windowMs: 15 * 1000,
-      max: 3, // Requests per windowMs
-      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-      message: {
-        error:
-            "You are sending too many verification requests, please slow down.",
-      },
-      keyGenerator: (req: any) => {
-        if (req.headers["x-forwarded-for"]) {
-          return req.headers["x-forwarded-for"].toString();
-        }
-        return req.ip;
-      },
-    });
+    if (!config.testing){
+      const limiter = rateLimit({
+        windowMs: 15 * 1000,
+        max: 3, // Requests per windowMs
+        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+        message: {
+          error:
+              "You are sending too many verification requests, please slow down.",
+        },
+        keyGenerator: (req: any) => {
+          if (req.headers["x-forwarded-for"]) {
+            return req.headers["x-forwarded-for"].toString();
+          }
+          return req.ip;
+        },
+      });
 
-    this.app.all("/session/verify/*", limiter);
-    this.app.all("/verify*", limiter);
-    this.app.all("/", limiter);
+      this.app.all("/session/verify/*", limiter);
+      this.app.all("/verify*", limiter);
+      this.app.all("/", limiter);
+    }
+
 
     // Session API endpoints require non "*" origins because of the session cookies
     const sessionPaths = [
