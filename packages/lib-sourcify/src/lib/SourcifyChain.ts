@@ -149,9 +149,7 @@ export default class SourcifyChain {
             ' for ' +
             address +
             ' on chain ' +
-            this.chainId +
-            ' bytecode: ' +
-            bytecode
+            this.chainId
         );
         return bytecode;
       } catch (err) {

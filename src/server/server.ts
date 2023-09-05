@@ -3,7 +3,7 @@ import serveIndex from "serve-index";
 import cors from "cors";
 import routes from "./routes";
 import bodyParser from "body-parser";
-import config, { etherscanAPIs } from "../config";
+import config from "../config";
 import { SourcifyEventManager } from "../common/SourcifyEventManager/SourcifyEventManager";
 import "../common/SourcifyEventManager/listeners/logger";
 import genericErrorHandler from "./middlewares/GenericErrorHandler";
@@ -25,7 +25,6 @@ import * as OpenApiValidator from "express-openapi-validator";
 import swaggerUi from "swagger-ui-express";
 import yamljs from "yamljs";
 import { resolveRefs } from "json-refs";
-import { initDeprecatedRoutes } from "./deprecated.routes";
 import { getAddress } from "ethers";
 import { logger } from "../common/loggerLoki";
 import { setLibSourcifyLogger } from "@ethereum-sourcify/lib-sourcify";
@@ -90,10 +89,6 @@ export class Server {
       })
     );
     this.app.use(bodyParser.json({ limit: config.server.maxFileSize }));
-
-    // Init deprecated routes before OpenApiValidator so that it can handle the request with the defined paths.
-    // initDeprecatedRoutes is a middleware that replaces the deprecated paths with the real ones.
-    initDeprecatedRoutes(this.app);
 
     this.app.use(
       fileUpload({
@@ -184,39 +179,56 @@ export class Server {
       next();
     });
 
-    if (
-      process.env.NODE_ENV === "production" &&
-      (process.env.TAG === "latest" || process.env.TAG === "stable")
-    ) {
-      const limiter = rateLimit({
-        windowMs: 15 * 1000,
-        max: 3, // Requests per windowMs
-        standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-        legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-        message: {
-          error:
-            "You are sending too many verification requests, please slow down.",
-        },
-        keyGenerator: (req: any) => {
-          if (req.headers["x-forwarded-for"]) {
-            return req.headers["x-forwarded-for"].toString();
-          }
-          return req.ip;
-        },
-      });
+    // if (
+    //   process.env.NODE_ENV === "production" &&
+    //   (process.env.TAG === "latest" || process.env.TAG === "stable")
+    // ) {
+    //   const limiter = rateLimit({
+    //     windowMs: 15 * 1000,
+    //     max: 3, // Requests per windowMs
+    //     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    //     legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+    //     message: {
+    //       error:
+    //         "You are sending too many verification requests, please slow down.",
+    //     },
+    //     keyGenerator: (req: any) => {
+    //       if (req.headers["x-forwarded-for"]) {
+    //         return req.headers["x-forwarded-for"].toString();
+    //       }
+    //       return req.ip;
+    //     },
+    //   });
+    //
+    //   this.app.all("/session/verify/*", limiter);
+    //   this.app.all("/verify*", limiter);
+    //   this.app.all("/", limiter);
+    // }
 
-      this.app.all("/session/verify/*", limiter);
-      this.app.all("/verify*", limiter);
-      this.app.all("/", limiter);
-    }
+    const limiter = rateLimit({
+      windowMs: 15 * 1000,
+      max: 3, // Requests per windowMs
+      standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+      legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+      message: {
+        error:
+            "You are sending too many verification requests, please slow down.",
+      },
+      keyGenerator: (req: any) => {
+        if (req.headers["x-forwarded-for"]) {
+          return req.headers["x-forwarded-for"].toString();
+        }
+        return req.ip;
+      },
+    });
+
+    this.app.all("/session/verify/*", limiter);
+    this.app.all("/verify*", limiter);
+    this.app.all("/", limiter);
 
     // Session API endpoints require non "*" origins because of the session cookies
     const sessionPaths = [
       "/session", // all paths /session/verify /session/input-files etc.
-      // legacy endpoint naming below
-      "/input-files",
-      "/restart-session",
-      "/verify-validated",
     ];
     this.app.use((req, res, next) => {
       // startsWith to match /session*
@@ -242,43 +254,43 @@ export class Server {
     this.app.get("/health", (_req, res) =>
       res.status(200).send("Alive and kicking!")
     );
+
     this.app.get("/chains", (_req, res) => {
       const sourcifyChains = sourcifyChainsArray.map(
-        ({ rpc, name, title, chainId, supported, monitored }) => {
-          // Don't publish providers
-          // Don't show Alchemy & Infura IDs
-          rpc = rpc.map((url) => {
-            if (typeof url === "string") {
-              if (url.includes("alchemy"))
-                return url.replace(/\/[^/]*$/, "/{ALCHEMY_ID}");
-              else if (url.includes("infura"))
-                return url.replace(/\/[^/]*$/, "/{INFURA_ID}");
-              else return url;
-            } else {
-              // FetchRequest
-              return url.url;
-            }
-          });
-          return {
-            name,
-            title,
-            chainId,
-            rpc,
-            supported,
-            monitored,
-            etherscanAPI: etherscanAPIs[chainId]?.apiURL, // Needed in the UI
-          };
-        }
+          ({ rpc, name, title, chainId, supported }) => {
+            // Don't publish providers
+            // Don't show Alchemy & Infura IDs
+            rpc = rpc.map((url) => {
+              if (typeof url === "string") {
+                return url;
+              } else {
+                // FetchRequest
+                return url.url;
+              }
+            });
+            return {
+              name,
+              title,
+              chainId,
+              rpc,
+              supported,
+            };
+          }
       );
 
       res.status(200).json(sourcifyChains);
     });
 
-    this.app.use(
-      "/repository",
-      express.static(this.repository),
-      serveIndex(this.repository, { icons: true })
-    );
+    if (config.storingMode === "local"){
+      this.app.use(
+          "/repository",
+          express.static(this.repository),
+          serveIndex(this.repository, { icons: true })
+      );
+    }
+
+
+
     this.app.use("/", routes);
     this.app.use(genericErrorHandler);
     this.app.use(notFoundHandler);
@@ -341,7 +353,7 @@ if (require.main === module) {
         "/api-docs",
         swaggerUi.serve,
         swaggerUi.setup(swaggerDocument, {
-          customSiteTitle: "Sourcify API",
+          customSiteTitle: "Thora Verifier API",
           customfavIcon: "https://sourcify.dev/favicon.ico",
         })
       );

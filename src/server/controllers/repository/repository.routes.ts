@@ -44,24 +44,15 @@ const router: Router = Router();
     .get(safeHandler(pair.method));
 });
 
+//Check if contracts are verified (perfect or partial match) by addresses
 // check(All)ByAddresses endpoints have different format then the ones above. check(All)ByAddresses take query params instead of path params.
 router
   .route("/check-all-by-addresses")
   .get(safeHandler(checkAllByChainAndAddressEndpoint));
 
+// Checks if contract with the desired chain and address is verified and in the repository.
 router
   .route("/check-by-addresses")
   .get(safeHandler(checkByChainAndAddressesEnpoint));
-
-export const deprecatedRoutesRepository = {
-  "/checkAllByAddresses": {
-    method: "get",
-    path: "/check-all-by-addresses",
-  },
-  "/checkByAddresses": {
-    method: "get",
-    path: "/check-by-addresses",
-  },
-};
 
 export default router;

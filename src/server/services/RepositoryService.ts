@@ -182,6 +182,9 @@ export class RepositoryService implements IRepositoryService {
     };
   };
 
+  /*
+  * Returns repository URLs for every file in the source tree for the desired chain and address.
+  * Searches for full and partial matches.*/
   getTree = async (
     chainId: string,
     address: string,
@@ -201,6 +204,9 @@ export class RepositoryService implements IRepositoryService {
     return { status: "partial", files };
   };
 
+  /*
+  * Get files's contents from repository
+  * */
   getContent = async (
     chainId: string,
     address: string,
@@ -220,6 +226,10 @@ export class RepositoryService implements IRepositoryService {
     return { status: "partial", files };
   };
 
+  /*
+  * Returns all verified contracts from the repository for the desired chain.
+  * Searches for full and partial matches.
+  * */
   getContracts = async (chainId: string): Promise<ContractData> => {
     const contracts = await this.fetchAllContracts(chainId);
     return contracts;

@@ -33,3 +33,8 @@ npm run server:start
 cd ui/
 npm start
 ```
+
+*Running the Monitor - A service that periodically checks for new contracts on a single chain.*
+```bash
+npm run monitor:start
+```

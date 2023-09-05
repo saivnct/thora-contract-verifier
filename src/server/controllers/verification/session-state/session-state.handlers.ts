@@ -14,15 +14,11 @@ import {
 import {
   PathBuffer,
   PathContent,
-  getIpfsGateway,
-  isEmpty,
-  performFetch,
 } from "@ethereum-sourcify/lib-sourcify";
-import { BadRequestError, ValidationError } from "../../../../common/errors";
+import { ValidationError } from "../../../../common/errors";
 import { services } from "../../../services/services";
 
 import { StatusCodes } from "http-status-codes";
-import { decode as bytecodeDecode } from "@ethereum-sourcify/bytecode-utils";
 
 import { logger } from "../../../../common/loggerLoki";
 
@@ -75,51 +71,4 @@ export async function restartSessionEndpoint(req: Request, res: Response) {
 
     res.status(statusCode).send(msg);
   });
-}
-
-export async function addInputContractEndpoint(req: Request, res: Response) {
-  const address: string = req.body.address;
-  const chainId: string = req.body.chainId;
-
-  const sourcifyChain = services.verification.supportedChainsMap[chainId];
-
-  const bytecode = await sourcifyChain.getBytecode(address);
-
-  const { ipfs: metadataIpfsCid } = bytecodeDecode(bytecode);
-
-  if (!metadataIpfsCid) {
-    throw new BadRequestError("The contract doesn't have a metadata IPFS CID");
-  }
-
-  const ipfsUrl = `${getIpfsGateway()}${metadataIpfsCid}`;
-  const metadataFileName = "metadata.json";
-  const retrievedMetadataText = await performFetch(ipfsUrl);
-
-  if (!retrievedMetadataText)
-    throw new Error(`Could not retrieve metadata from ${ipfsUrl}`);
-  const pathContents: PathContent[] = [];
-
-  const retrievedMetadataBase64 = Buffer.from(retrievedMetadataText).toString(
-    "base64"
-  );
-
-  pathContents.push({
-    path: metadataFileName,
-    content: retrievedMetadataBase64,
-  });
-
-  const session = req.session;
-
-  const newFilesCount = saveFiles(pathContents, session);
-  if (newFilesCount) {
-    await checkContractsInSession(session);
-    // verifyValidated fetches missing files from the contract
-    await verifyContractsInSession(
-      session.contractWrappers,
-      session,
-      services.verification,
-      services.repository
-    );
-  }
-  res.send(getSessionJSON(session));
 }

@@ -6,11 +6,6 @@ const router: Router = Router();
 
 router.route("/verify").post(safeHandler(legacyVerifyEndpoint));
 
-export const deprecatedRoutesVerifyStateless = {
-  "/": {
-    method: "post",
-    path: "/verify",
-  },
-};
+
 
 export default router;

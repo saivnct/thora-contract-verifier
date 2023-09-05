@@ -17,7 +17,6 @@ import {
   SessionResponse,
   VerificationInput,
 } from "../../../../../types";
-// import { checkAllByAddresses } from "../../../../../utils/api";
 import Message from "./Message";
 import { HiChevronDown } from "react-icons/hi";
 import ReactTooltip from "react-tooltip";
@@ -43,7 +42,6 @@ const ChainAddressForm = ({
   const [isInvalidAddress, setIsInvalidAddress] = useState<boolean>(false);
   const [chainId, setChainId] = useState<string>();
   const [foundMatches, setFoundMatches] = useState<CheckAllByAddressResult>();
-  const { sourcifyChains } = useContext(Context);
   const verifyButtonRef = useRef<HTMLButtonElement>(null);
   const [isMoreFieldsOpen, setIsMoreFieldsOpen] = useState<boolean>(false);
   /* const [abiEncodedConstructorArguments, setAbiEncodedConstructorArguments] =
@@ -82,18 +80,6 @@ const ChainAddressForm = ({
       setAddress(tempAddr);
       return setIsInvalidAddress(true);
     }
-
-    // checkAllByAddresses(
-    //   checksummedAddress,
-    //   sourcifyChains.map((c) => c.chainId.toString()).join(",")
-    // ).then((res) => {
-    //   // checkAllByAddresses inputs and outptus multiple addresses.
-    //   const currentAddressMatches = res.find(
-    //     (match) => (match.address = checksummedAddress)
-    //   );
-    //   setFoundMatches(currentAddressMatches);
-    // });
-
 
   };
 
