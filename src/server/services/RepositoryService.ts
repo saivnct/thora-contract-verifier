@@ -20,6 +20,7 @@ import config from "../../config";
 import { SourcifyEventManager } from "../../common/SourcifyEventManager/SourcifyEventManager";
 import { logger } from "../../common/loggerLoki";
 import { getAddress } from "ethers";
+import {ContractDAO, ContractDB} from "./ContractDAO";
 
 /**
  * A type for specifying the match quality of files.
@@ -58,11 +59,12 @@ export interface IRepositoryService {
   fetchAllFileUrls(chain: string, address: string): Array<string>;
   fetchAllFilePaths(chain: string, address: string): Array<FileObject>;
   fetchAllFileContents(chain: string, address: string): Array<FileObject>;
-  checkByChainAndAddress(address: string, chain: string): Match[];
-  checkAllByChainAndAddress(address: string, chain: string): Match[];
+  checkByChainAndAddress(address: string, chain: string): Promise<Match[]>;
+  checkAllByChainAndAddress(address: string, chain: string): Promise<Match[]>;
   save(path: string | PathConfig, file: string): void;
   deletePartialIfExists(chain: string, address: string): void;
   repositoryPath: string;
+  contractDAO?: ContractDAO;
   getTree(
     chainId: string,
     address: string,
@@ -82,39 +84,33 @@ export interface IRepositoryService {
 
 export class RepositoryService implements IRepositoryService {
   repositoryPath: string;
+  contractDAO?: ContractDAO;
   private ipfsClient?: IPFSHTTPClient;
 
-  constructor(repositoryPath: string) {
+  constructor(repositoryPath: string, dbPool: any) {
     this.repositoryPath = repositoryPath;
     if (process.env.IPFS_API) {
       this.ipfsClient = createIpfsClient({ url: process.env.IPFS_API });
     } else {
       logger.warn("IPFS_API not set, IPFS MFS will not be updated");
     }
-  }
-  // Not used anywhere
-  // async getTreeByChainAndAddress(
-  //   chainId: string,
-  //   address: string
-  // ): Promise<string[]> {
-  //   chainId = checkChainId(chainId);
-  //   return this.fetchAllFileUrls(chainId, address);
-  // }
 
-  // Not used anywhere
-  // async getByChainAndAddress(
-  //   chainId: string,
-  //   address: string
-  // ): Promise<FileObject[]> {
-  //   chainId = checkChainId(chainId);
-  //   return this.fetchAllFileContents(chainId, address);
-  // }
+    if (config.storingMode === "db" && dbPool){
+      this.contractDAO = new ContractDAO(dbPool);
+    }
+
+
+  }
 
   fetchAllFileUrls(
     chain: string,
     address: string,
     match = "full_match"
   ): Array<string> {
+    if (config.storingMode !== "local"){
+      return [];
+    }
+
     const files: Array<FileObject> = this.fetchAllFilePaths(
       chain,
       address,
@@ -149,6 +145,10 @@ export class RepositoryService implements IRepositoryService {
     address: string,
     match = "full_match"
   ): Array<FileObject> {
+    if (config.storingMode !== "local"){
+      return [];
+    }
+
     const fullPath: string =
       this.repositoryPath +
       `/contracts/${match}/${chain}/${getAddress(address)}/`;
@@ -164,6 +164,10 @@ export class RepositoryService implements IRepositoryService {
     address: string,
     match = "full_match"
   ): Array<FileObject> {
+    if (config.storingMode !== "local"){
+      return [];
+    }
+
     const files = this.fetchAllFilePaths(chain, address, match);
     for (const file in files) {
       const loadedFile = fs.readFileSync(files[file].path);
@@ -172,7 +176,16 @@ export class RepositoryService implements IRepositoryService {
 
     return files;
   }
+
   fetchAllContracts = async (chain: String): Promise<ContractData> => {
+    if (config.storingMode !== "local"){
+      return {
+        full: [],
+        partial: [],
+      };
+    }
+
+
     const fullPath = this.repositoryPath + `/contracts/full_match/${chain}/`;
     const partialPath =
       this.repositoryPath + `/contracts/partial_match/${chain}/`;
@@ -306,69 +319,108 @@ export class RepositoryService implements IRepositoryService {
     );
   }
 
-  // Checks contract existence in repository.
-  checkByChainAndAddress(address: string, chainId: string): Match[] {
-    const contractPath = this.generateAbsoluteFilePath({
-      matchQuality: "full",
-      chainId,
-      address,
-      fileName: "metadata.json",
-    });
+  // Check if contract is already verified
+  // local mode: contract existence in repository
+  // db mode: contract existence in db and verified
+  async checkByChainAndAddress(address: string, chainId: string): Promise<Match[]> {
+    if (config.storingMode === "db"){
+      const contractDB = await this.contractDAO?.getByContractAddr(address);
 
-    try {
-      const storageTimestamp = fs.statSync(contractPath).birthtime;
-      return [
-        {
-          address,
-          chainId,
-          status: "perfect",
-          storageTimestamp,
-        },
-      ];
-    } catch (e: any) {
-      logger.debug(
-        `Contract (full_match) not found in repository: ${address} - chain: ${chainId}`
-      );
-      return [];
+      if (contractDB && contractDB.verified){
+        return [
+          {
+            address,
+            chainId,
+            status: "perfect",
+          },
+        ];
+      }
+
     }
+    else if (config.storingMode === "local"){
+      const contractPath = this.generateAbsoluteFilePath({
+        matchQuality: "full",
+        chainId,
+        address,
+        fileName: "metadata.json",
+      });
+
+      try {
+        const storageTimestamp = fs.statSync(contractPath).birthtime;
+        return [
+          {
+            address,
+            chainId,
+            status: "perfect",
+            storageTimestamp,
+          },
+        ];
+      } catch (e: any) {
+
+      }
+    }
+
+    logger.debug(
+        `Contract (full_match) not found in repository: ${address} - chain: ${chainId}`
+    );
+    return [];
   }
 
   // Checks contract existence in repository for full and partial matches.
-  checkAllByChainAndAddress(address: string, chainId: string): Match[] {
-    const fullContractPath = this.generateAbsoluteFilePath({
-      matchQuality: "full",
-      chainId,
-      address,
-      fileName: "metadata.json",
-    });
+  async checkAllByChainAndAddress(address: string, chainId: string): Promise<Match[]> {
+    if (config.storingMode === "db"){
+      const contractDB = await this.contractDAO?.getByContractAddr(address);
 
-    const partialContractPath = this.generateAbsoluteFilePath({
-      matchQuality: "partial",
-      chainId,
-      address,
-      fileName: "metadata.json",
-    });
+      if (contractDB && contractDB.verified){
+        return [
+          {
+            address,
+            chainId,
+            status: "perfect",
+          },
+        ];
+      }
 
-    try {
-      const storage = this.fetchFromStorage(
-        fullContractPath,
-        partialContractPath
-      );
-      return [
-        {
-          address,
-          chainId,
-          status: storage?.status,
-          storageTimestamp: storage?.time,
-          create2Args: storage?.create2Args,
-        },
-      ];
-    } catch (e: any) {
-      logger.debug(
-        `Contract (full & partial match) not found in repository: ${address} - chain: ${chainId}`
-      );
-      return [];
     }
+    else if (config.storingMode === "local"){
+      const fullContractPath = this.generateAbsoluteFilePath({
+        matchQuality: "full",
+        chainId,
+        address,
+        fileName: "metadata.json",
+      });
+
+      const partialContractPath = this.generateAbsoluteFilePath({
+        matchQuality: "partial",
+        chainId,
+        address,
+        fileName: "metadata.json",
+      });
+
+      try {
+        const storage = this.fetchFromStorage(
+            fullContractPath,
+            partialContractPath
+        );
+        return [
+          {
+            address,
+            chainId,
+            status: storage?.status,
+            storageTimestamp: storage?.time,
+            create2Args: storage?.create2Args,
+          },
+        ];
+      } catch (e: any) {
+
+      }
+    }
+
+    logger.debug(
+        `Contract (full & partial match) not found in repository: ${address} - chain: ${chainId}`
+    );
+    return [];
+
   }
 
   /**
@@ -398,7 +450,26 @@ export class RepositoryService implements IRepositoryService {
     ) {
       const matchQuality = this.statusToMatchQuality(match.status);
 
-      if (config.storingMode === "local"){
+      if (config.storingMode === "db"){
+        logger.debug({
+          labels: { event: `checkByChainAndAddress - storingMode db`, level: "debug" },
+          message: `address: ${match.address} - chainId: ${match.chainId} - status: ${match.status}`,
+        });
+
+        try{
+          const buff = Buffer.from(contract.metadataRaw);
+          const metadataBase64 = buff.toString('base64');
+
+          await this.contractDAO?.verifiedContract(match.address, true, metadataBase64);
+        }catch (e) {
+          logger.error({
+            labels: { event: `checkByChainAndAddress - storingMode db`, level: "debug" },
+            message: `address: ${match.address} - chainId: ${match.chainId} - status: ${match.status} - err: ${e}`,
+          });
+        }
+
+      }
+      else if (config.storingMode === "local"){
         // Delete the partial matches if we now have a perfect match instead.
         if (match.status === "perfect") {
           this.deletePartialIfExists(match.chainId, match.address);
@@ -482,17 +553,13 @@ export class RepositoryService implements IRepositoryService {
               match.immutableReferences
           );
         }
+
+        await this.addToIpfsMfs(matchQuality, match.chainId, match.address);
       }
-      else{
-        //TODO - IMPLEMENT SAVE TO POSTGRES
-      }
 
-
-
-
-      await this.addToIpfsMfs(matchQuality, match.chainId, match.address);
       SourcifyEventManager.trigger("Verification.MatchStored", match);
-    } else if (match.status === "extra-file-input-bug") {
+    }
+    else if (match.status === "extra-file-input-bug") {
       return match;
     } else {
       throw new Error(`Unknown match status: ${match.status}`);
@@ -647,6 +714,8 @@ export class RepositoryService implements IRepositoryService {
       await this.ipfsClient.files.cp(addResult.cid, mfsPath, { parents: true });
     }
   }
+
+
   private sanitizePath(originalPath: string) {
     // Clean ../ and ./ from the path. Also collapse multiple slashes into one.
     let sanitizedPath = path.normalize(originalPath);

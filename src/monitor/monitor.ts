@@ -101,7 +101,7 @@ class ChainMonitor extends EventEmitter {
   private processBlock = (blockNumber: number) => {
     this.sourcifyChain
       .getBlock(blockNumber, true)
-      .then((block) => {
+      .then(async (block) => {
         if (!block) {
           this.adaptBlockPause("increase");
           return;
@@ -118,7 +118,15 @@ class ChainMonitor extends EventEmitter {
         for (const tx of block.prefetchedTransactions) {
           if (createsContract(tx)) {
             const address = getCreateAddress(tx);
-            if (this.isVerified(address)) {
+
+            let isVerified = false;
+            try{
+              isVerified = await this.isVerified(address);
+            }catch (e){
+              console.error(e);
+            }
+
+            if (isVerified) {
               SourcifyEventManager.trigger("Monitor.AlreadyVerified", {
                 address,
                 chainId: this.sourcifyChain.chainId.toString(),
@@ -157,8 +165,8 @@ class ChainMonitor extends EventEmitter {
       });
   };
 
-  private isVerified(address: string): boolean {
-    const foundArr = this.repositoryService.checkByChainAndAddress(
+  private async isVerified(address: string): Promise<boolean> {
+    const foundArr = await this.repositoryService.checkByChainAndAddress(
       address,
       this.sourcifyChain.chainId.toString()
     );

@@ -307,16 +307,20 @@ export const verifyContractsInSession = async (
 
     // Check if contract is already verified
     if (Boolean(contractWrapper.address) && Boolean(contractWrapper.chainId)) {
-      const found = repositoryService.checkByChainAndAddress(
-        contractWrapper.address as string,
-        contractWrapper.chainId as string
-      );
+      try{
+        const found = await repositoryService.checkByChainAndAddress(
+            contractWrapper.address as string,
+            contractWrapper.chainId as string
+        );
 
-      if (found.length) {
-        contractWrapper.status = found[0].status || "error";
-        contractWrapper.statusMessage = found[0].message;
-        contractWrapper.storageTimestamp = found[0].storageTimestamp;
-        continue;
+        if (found.length) {
+          contractWrapper.status = found[0].status || "error";
+          contractWrapper.statusMessage = found[0].message;
+          contractWrapper.storageTimestamp = found[0].storageTimestamp;
+          continue;
+        }
+      }catch (e) {
+        console.error(e);
       }
     }
 
@@ -325,18 +329,14 @@ export const verifyContractsInSession = async (
     if (!isVerifiable(contractWrapper)) {
       logger.debug({
         labels: { event: `verifyContractsInSession - isVerifiable false`, level: "debug" },
-        message: `
-        id ${id}
-        missing ${isEmpty(contractWrapper.contract.missing)}
-        invalid ${isEmpty(contractWrapper.contract.invalid)}
-        address ${Boolean(contractWrapper.address)}
-        chainId ${Boolean(contractWrapper.chainId)}
-        `,
+        message: ``,
       });
       continue;
     }
+
     logger.debug({
       labels: { event: `verifyContractsInSession - isVerifiable true`, level: "debug" },
+      message: ``,
     });
 
     const {

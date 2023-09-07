@@ -52,14 +52,14 @@ export function createContractEndpoint(
   };
 }
 
-export function checkAllByChainAndAddressEndpoint(req: any, res: Response) {
+export async function checkAllByChainAndAddressEndpoint(req: any, res: Response) {
   const map: Map<string, any> = new Map();
   const addresses = req.query.addresses.split(",");
   const chainIds = req.query.chainIds.split(",");
   for (const address of addresses) {
     for (const chainId of chainIds) {
       try {
-        const found: Match[] = services.repository.checkAllByChainAndAddress(
+        const found: Match[] = await services.repository.checkAllByChainAndAddress(
           address,
           chainId
         );
@@ -89,14 +89,15 @@ export function checkAllByChainAndAddressEndpoint(req: any, res: Response) {
   res.send(resultArray);
 }
 
-export function checkByChainAndAddressesEnpoint(req: any, res: Response) {
+export async function checkByChainAndAddressesEnpoint(req: any, res: Response) {
   const map: Map<string, any> = new Map();
   const addresses = req.query.addresses.split(",");
   const chainIds = req.query.chainIds.split(",");
   for (const address of addresses) {
     for (const chainId of chainIds) {
       try {
-        const found: Match[] = services.repository.checkByChainAndAddress(
+        // Check if contract is already verified
+        const found: Match[] = await services.repository.checkByChainAndAddress(
           address,
           chainId
         );

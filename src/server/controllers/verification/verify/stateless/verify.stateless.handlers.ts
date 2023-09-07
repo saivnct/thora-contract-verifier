@@ -17,7 +17,8 @@ export async function legacyVerifyEndpoint(
   req: LegacyVerifyRequest,
   res: Response
 ): Promise<any> {
-  const result = services.repository.checkByChainAndAddress(
+  // Check if contract is already verified
+  const result = await services.repository.checkByChainAndAddress(
     req.body.address,
     req.body.chain
   );

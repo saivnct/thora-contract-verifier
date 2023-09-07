@@ -40,10 +40,6 @@ export async function addInputFilesEndpoint(req: Request, res: Response) {
 
   const session = req.session;
   const newFilesCount = saveFiles(pathContents, session);
-  logger.debug({
-    labels: { event: "addInputFilesEndpoint", level: "debug" },
-    message: `new Files: ${newFilesCount}`,
-  });
   if (newFilesCount) {
     await checkContractsInSession(session);
     await verifyContractsInSession(

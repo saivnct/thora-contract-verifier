@@ -31,6 +31,8 @@ import { setLibSourcifyLogger } from "@ethereum-sourcify/lib-sourcify";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fileUpload = require("express-fileupload");
 import { rateLimit } from "express-rate-limit";
+import {services} from "./services/services";
+import {ContractDAO} from "./services/ContractDAO";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -76,6 +78,7 @@ setLibSourcifyLogger({
 export class Server {
   app: express.Application;
   repository = config.repository.path;
+  dbPool = services.dbPool;
   port: string | number;
 
   constructor(port?: string | number) {
@@ -279,8 +282,12 @@ export class Server {
   }
 
   async listen(callback?: () => void) {
+
     const promisified: any = util.promisify(this.app.listen);
     await promisified(this.port);
+
+
+
     if (callback) callback();
   }
 
@@ -339,6 +346,15 @@ if (require.main === module) {
           customfavIcon: "https://sourcify.dev/favicon.ico",
         })
       );
+
+      if (config.storingMode === "db" && server.dbPool){
+        server.dbPool.connect().then(function (client: any) {
+          console.log('Postgres Connected!');
+        });
+      }
+
+
+
       server.app.listen(server.port, () =>
         logger.info(`Server listening on port ${server.port}`)
       );

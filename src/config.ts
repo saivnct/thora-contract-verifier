@@ -42,5 +42,12 @@ export default {
     /^https?:\/\/(?:.+\.)?thorachain.com$/, // thorachain.com and subdomains
     process.env.NODE_ENV === "development" && /^https?:\/\/localhost(?::\d+)?$/, // localhost on any port
   ],
-  storingMode: process.env.STORING_MODE || "local"
+  storingMode: process.env.STORING_MODE || "local",
+  db: {
+    host: process.env.POSTGRES_HOST,
+    port: process.env.POSTGRES_PORT || 5432,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+  }
 };
