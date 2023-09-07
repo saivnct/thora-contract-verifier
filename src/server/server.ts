@@ -4,7 +4,6 @@ import cors from "cors";
 import routes from "./routes";
 import bodyParser from "body-parser";
 import config from "../config";
-import { SourcifyEventManager } from "../common/SourcifyEventManager/SourcifyEventManager";
 import "../common/SourcifyEventManager/listeners/logger";
 import genericErrorHandler from "./middlewares/GenericErrorHandler";
 import notFoundHandler from "./middlewares/NotFoundError";
@@ -14,7 +13,6 @@ import util from "util";
 import {
   checkSourcifyChainId,
   checkSupportedChainId,
-  sourcifyChainsArray,
 } from "../sourcify-chains";
 import {
   validateAddresses,
@@ -32,7 +30,6 @@ import { setLibSourcifyLogger } from "@ethereum-sourcify/lib-sourcify";
 const fileUpload = require("express-fileupload");
 import { rateLimit } from "express-rate-limit";
 import {services} from "./services/services";
-import {ContractDAO} from "./services/ContractDAO";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -240,31 +237,6 @@ export class Server {
       res.status(200).send("Alive and kicking!")
     );
 
-    this.app.get("/chains", (_req, res) => {
-      const sourcifyChains = sourcifyChainsArray.map(
-          ({ rpc, name, title, chainId, supported }) => {
-            // Don't publish providers
-            // Don't show Alchemy & Infura IDs
-            rpc = rpc.map((url) => {
-              if (typeof url === "string") {
-                return url;
-              } else {
-                // FetchRequest
-                return url.url;
-              }
-            });
-            return {
-              name,
-              title,
-              chainId,
-              rpc,
-              supported,
-            };
-          }
-      );
-
-      res.status(200).json(sourcifyChains);
-    });
 
     if (config.storingMode === "local"){
       this.app.use(

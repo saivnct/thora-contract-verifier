@@ -1,4 +1,4 @@
-import { GET_CHAINS_URL } from "../constants";
+import { IS_MAINNET } from "../constants";
 import { Chain } from "../types";
 
 
@@ -9,6 +9,34 @@ import { Chain } from "../types";
  *
  */
 export const getSourcifyChains = async (): Promise<Chain[]> => {
-  const chainsArray = await (await fetch(GET_CHAINS_URL)).json();
+  // Fetch the chains array from the server
+  // const chainsArray = await (await fetch(`${SERVER_URL}/chains`)).json();
+
+  let chain = {
+    name: "Thora Network Testnet",
+    title: "Thora Network Testnet",
+    chainId: 696969,
+    shortName: "Oda",
+    network: "testnet",
+    networkId: 696969,
+    supported: true,
+  }
+
+  if (IS_MAINNET) {
+    chain = {
+      name: "Thora Network Mainnet",
+      title: "Thora Network Mainnet",
+      chainId: 686868,
+      shortName: "Thora",
+      network: "mainnet",
+      networkId: 686868,
+      supported: true,
+    }
+  }
+
+  const chainsArray = [chain];
+
+  console.log("chainsArray", chainsArray);
+
   return chainsArray;
 };
