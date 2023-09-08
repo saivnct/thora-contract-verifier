@@ -4,20 +4,10 @@ services:
   thoraverifier:
     container_name: thoraverifier_container
     image: giangbb/thora-contract-verifier:1.0
-    environment:
-      SERVER_PORT: ${SERVER_PORT}
-      SESSION_SECRET: ${SESSION_SECRET}
-      NODE_ENV: ${NODE_ENV}
-      IPFS_GATEWAY: ${IPFS_GATEWAY}
-      STORING_MODE: ${STORING_MODE}
-      REPOSITORY_PATH: ${REPOSITORY_PATH}
-      SOLC_REPO: ${SOLC_REPO}
-      SOLJSON_REPO: ${SOLJSON_REPO}
-      POSTGRES_HOST: ${POSTGRES_HOST}
-      POSTGRES_PORT: ${POSTGRES_PORT}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ./thoraverifier.env.testnet:/home/app/environments/.env
+    env_file:
+      - thoraverifier.env.testnet
     ports:
       - "5555:5555"
     networks:
