@@ -1,17 +1,13 @@
 import * as chainsRaw from "./chains.json";
 import * as dotenv from "dotenv";
 import path from "path";
-// import { SourcifyEventManager } from "./common/SourcifyEventManager/SourcifyEventManager";
 import {
   SourcifyChain,
   SourcifyChainMap,
   SourcifyChainExtension,
   Chain,
 } from "@ethereum-sourcify/lib-sourcify";
-// import { etherscanAPIs } from "./config";
 import { ValidationError } from "./common/errors";
-// import { logger } from "./common/loggerLoki";
-import { FetchRequest } from "ethers";
 
 const allChains = chainsRaw as Chain[];
 
@@ -48,28 +44,15 @@ const LOCAL_CHAINS: SourcifyChain[] = [
   //   monitored: true,
   // }),
   new SourcifyChain({
-    name: "Thora Network Testnet",
-    shortName: "Oda",
-    chainId: 696969,
+    name: process.env.CHAIN_NAME || "Thora Network Testnet",
+    shortName: process.env.CHAIN_SHORT_NAME || "Oda",
+    chainId: parseInt(process.env.CHAIN_ID || '696969'),
     faucets: [],
-    infoURL: "localhost",
-    nativeCurrency: { name: "tTHA", symbol: "tTHA", decimals: 18 },
-    network: "testnet",
-    networkId: 696969,
-    rpc: [`http://localhost:8545`],
-    supported: true,
-    monitored: true,
-  }),
-  new SourcifyChain({
-    name: "Thora Network Mainnet",
-    shortName: "Thora",
-    chainId: 686868,
-    faucets: [],
-    infoURL: "localhost",
-    nativeCurrency: { name: "THA", symbol: "THA", decimals: 18 },
-    network: "mainnet",
-    networkId: 686868,
-    rpc: [`http://localhost:8545`],
+    infoURL: process.env.CHAIN_INFO_URL || "https://thora.network",
+    nativeCurrency: { name: process.env.CHAIN_NATIVE_CURRENCY_NAME || "tTHA", symbol: process.env.CHAIN_NATIVE_CURRENCY_SYMBOL || "tTHA", decimals: parseInt(process.env.CHAIN_NATIVE_CURRENCY_DECIMALS || '18') },
+    network: process.env.CHAIN_NETWORK,
+    networkId: parseInt(process.env.CHAIN_ID || '696969'),
+    rpc: [process.env.CHAIN_RPC || `http://localhost:8545`],
     supported: true,
     monitored: true,
   }),
