@@ -4,8 +4,11 @@ import { RepositoryService } from "./RepositoryService";
 import { VerificationService } from "./VerificationService";
 import {pool} from "./DbService";
 
+const repositoryService = new RepositoryService(config.repository.path, pool);
+const verificationService = new VerificationService(supportedChainsMap, repositoryService);
+
 export const services = {
-  verification: new VerificationService(supportedChainsMap),
-  repository: new RepositoryService(config.repository.path, pool),
+  verification: verificationService,
+  repository: repositoryService,
   dbPool: pool,
 };

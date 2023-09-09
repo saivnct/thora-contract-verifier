@@ -66,7 +66,7 @@ export async function legacyVerifyEndpoint(
     : checkedContracts[0];
 
   try {
-    const match = await services.verification.verifyDeployed(
+    let match = await services.verification.verifyDeployed(
       contract,
       req.body.chain,
       req.body.address,
@@ -82,11 +82,12 @@ export async function legacyVerifyEndpoint(
         req.body.address,
         req.body.creatorTxHash
       );
-      if (tempMatch.status === "perfect") {
-        await services.repository.storeMatch(contract, tempMatch);
-        return res.send({ result: [tempMatch] });
+      if (tempMatch.status === "perfect" || tempMatch.status === "partial") {
+        match = tempMatch;
       }
     }
+
+
     if (match.status) {
       await services.repository.storeMatch(contract, match);
     }

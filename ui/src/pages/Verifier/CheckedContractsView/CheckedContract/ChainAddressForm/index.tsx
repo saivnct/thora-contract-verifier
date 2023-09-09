@@ -43,7 +43,6 @@ const ChainAddressForm = ({
   const [chainId, setChainId] = useState<string>();
   const [foundMatches, setFoundMatches] = useState<CheckAllByAddressResult>();
   const verifyButtonRef = useRef<HTMLButtonElement>(null);
-  const [isMoreFieldsOpen, setIsMoreFieldsOpen] = useState<boolean>(false);
   /* const [abiEncodedConstructorArguments, setAbiEncodedConstructorArguments] =
     useState<string>("");
   const [msgSender, setMsgSender] = useState<string>(""); */
@@ -166,128 +165,6 @@ const ChainAddressForm = ({
             value={chainId}
             handleChainIdChange={handleChainIdChange}
           />
-        </div>
-
-        <button
-          onClick={() => setIsMoreFieldsOpen((prevValue) => !prevValue)}
-          className="py-1 text-ceruleanBlue-600 mt-2 w-full"
-          type="button"
-        >
-          More Inputs (optional)
-          <HiChevronDown
-            size="1.75em"
-            className={"inline transition-transform duration-300 ease-in-out "}
-            style={!isMoreFieldsOpen ? {} : { transform: "rotateX(180deg)" }}
-          />
-        </button>
-
-        {/* CreatorTx, Constructor arguments, msg.sender etc fields. */}
-        <div
-          className={`${isMoreFieldsOpen ? "flex" : "hidden"} flex-col mt-2`}
-        >
-          {/* Creator Tx Hash */}
-          <div className="">
-            <div className="flex justify-between">
-              <ReactTooltip
-                effect="solid"
-                delayHide={500}
-                clickable={true}
-                className="max-w-xl"
-                id="creator-tx-hash-tooltip"
-              />
-              <label className="block" htmlFor="creatorTxHash">
-                Creator Tx Hash{" "}
-                <span
-                  className="ml-1 text-ceruleanBlue-200 font-bold"
-                  data-for="creator-tx-hash-tooltip"
-                  data-tip="If your contract has immutable variables, we will look for the tx.input of transaction that created the contract to see if it matches the creation bytecode. If you leave this blank and we need it, we will try getting it ourselves from block explorers or APIs that provide this data."
-                >
-                  ?
-                </span>
-              </label>
-              {isInvalidCreatorTxHash && (
-                <span className="text-red-500 text-sm">
-                  Invalid Transaction Hash String
-                </span>
-              )}
-            </div>
-
-            <Input
-              id="creatorTxHash"
-              value={creatorTxHash}
-              onChange={handleCreatorTxHashChange}
-              placeholder="0x2fabe97..."
-              className="mb-2"
-            />
-          </div>
-          {/* Inputs below are used for verification with simulation
-           
-          <div className="text-sm text-gray-600 mb-4 mt-6">
-            Inputs below will be used to simulate the creation of the contract.
-            This helps us verify contracts created by a factory contract. <br />
-            If there are other variables your contract makes use of during
-            creation, please let us know.
-          </div>
-          
-          {checkedContract?.constructorArgumentsArray &&
-            checkedContract?.constructorArgumentsArray.length > 0 && (
-              <div>
-                <InputToggle
-                  isChecked={showRawAbiInput}
-                  onClick={() => setShowRawAbiInput((prev) => !prev)}
-                  label="Raw ABI-Encoded Input"
-                />
-                <Constructorarguments
-                  abiEncodedConstructorArguments={
-                    abiEncodedConstructorArguments
-                  }
-                  setAbiEncodedConstructorArguments={
-                    setAbiEncodedConstructorArguments
-                  }
-                  abiJsonConstructorArguments={
-                    checkedContract.constructorArgumentsArray
-                  }
-                  showRawAbiInput={showRawAbiInput}
-                  setIsInvalidConstructorArguments={
-                    setIsInvalidConstructorArguments
-                  }
-                />
-              </div>
-            )}
-          
-          <div className="mt-2">
-            <div className="flex justify-between">
-              <ReactTooltip
-                effect="solid"
-                delayHide={500}
-                clickable={true}
-                className="max-w-xl"
-                id="msg-sender-tooltip"
-              />
-              <label className="block" htmlFor="msgSender">
-                msg.sender{" "}
-                <span
-                  className="ml-1 text-ceruleanBlue-200 font-bold"
-                  data-for="msg-sender-tooltip"
-                  data-tip="`msg.sender` will be used if your contract assigns it to an immutable variable such as an `owner`. In the case of a contract created by a factory, this is the factory address"
-                >
-                  ?
-                </span>
-              </label>
-              {isInvalidMsgSender && (
-                <span className="text-red-500 text-sm">Invalid Address</span>
-              )}
-            </div>
-
-            <Input
-              id="msgSender"
-              value={msgSender}
-              onChange={handleMsgSenderChange}
-              placeholder="0x2fabe97..."
-              className="mb-2"
-            />
-          </div>
-           */}
         </div>
 
         <button

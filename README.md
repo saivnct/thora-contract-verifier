@@ -14,11 +14,8 @@
 ```bash
 npm install
 ```
-  *Install all modules with lerna:*    
-```bash
-npx lerna bootstrap
-```  
-*And build:*  
+
+*Build with lerna:*  
 ```bash
 npx lerna run build
 ```

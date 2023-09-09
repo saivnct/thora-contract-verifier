@@ -59,6 +59,7 @@ export interface IRepositoryService {
   fetchAllFileUrls(chain: string, address: string): Array<string>;
   fetchAllFilePaths(chain: string, address: string): Array<FileObject>;
   fetchAllFileContents(chain: string, address: string): Array<FileObject>;
+  getContractByAddr(address: string, chain: string): Promise<ContractDB | null| undefined>;
   checkByChainAndAddress(address: string, chain: string): Promise<Match[]>;
   checkAllByChainAndAddress(address: string, chain: string): Promise<Match[]>;
   save(path: string | PathConfig, file: string): void;
@@ -319,12 +320,22 @@ export class RepositoryService implements IRepositoryService {
     );
   }
 
+
+  // get contract in db
+  async getContractByAddr(address: string, chainId: string): Promise<ContractDB | null | undefined>{
+    if (config.storingMode === "db"){
+      return this.contractDAO?.getByContractAddr(address);
+    }
+
+    return null;
+  }
+
   // Check if contract is already verified
   // local mode: contract existence in repository
   // db mode: contract existence in db and verified
   async checkByChainAndAddress(address: string, chainId: string): Promise<Match[]> {
     if (config.storingMode === "db"){
-      const contractDB = await this.contractDAO?.getByContractAddr(address);
+      const contractDB = await this.getContractByAddr(address, chainId);
 
       if (contractDB && contractDB.verified){
         return [
