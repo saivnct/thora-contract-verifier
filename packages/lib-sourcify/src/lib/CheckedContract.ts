@@ -21,7 +21,7 @@ import { logError, logInfo, logWarn } from './logger';
 
 // TODO: find a better place for these constants. Reminder: this sould work also in the browser
 const IPFS_PREFIX = 'dweb:/ipfs/';
-const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT || '') || 3000; // ms
+const FETCH_TIMEOUT = parseInt(process.env.FETCH_TIMEOUT || '') || 30000; // ms
 /**
  * Abstraction of a checked solidity contract. With metadata and source (solidity) files.
  */

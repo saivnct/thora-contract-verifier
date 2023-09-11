@@ -13,7 +13,7 @@ export type ContractDB = {
 
 export interface IContractDAO {
     getByContractAddr(address: string): Promise<ContractDB | null>;
-    verifiedContract(address: string, isVerified: boolean, metadata: string): Promise<void>;
+    verifiedContract(address: string, isVerified: boolean, metadata: string, contractType: string): Promise<void>;
     dbPool: any;
 }
 
@@ -41,8 +41,8 @@ export class ContractDAO implements IContractDAO {
         return null;
     }
 
-    async verifiedContract(address: string, isVerified: boolean, metadata: string): Promise<void>{
-        if (isVerified && !metadata ){
+    async verifiedContract(address: string, isVerified: boolean, metadataBase64: string, contractType: string): Promise<void>{
+        if (isVerified && !metadataBase64 ){
             throw new Error('Invalid params');
         }
 
@@ -56,15 +56,17 @@ export class ContractDAO implements IContractDAO {
         if (!isVerified){
             result = await this.dbPool.query('UPDATE contracts SET ' +
                 '"verified" = $2, ' +
-                '"metadata"= $3 ' +
+                '"metadata"= $3, ' +
+                '"ctrtype"= $4 ' +
                 'WHERE contract = $1',
-                [address, false, ""]);
+                [address, false, "", ""]);
         }else{
             result = await this.dbPool.query('UPDATE contracts SET ' +
                 '"verified" = $2, ' +
-                '"metadata"= $3 ' +
+                '"metadata"= $3, ' +
+                '"ctrtype"= $4 ' +
                 'WHERE contract = $1',
-                [address, true, metadata]);
+                [address, true, metadataBase64, contractType]);
         }
 
         return result;

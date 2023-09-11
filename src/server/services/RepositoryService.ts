@@ -21,6 +21,7 @@ import { SourcifyEventManager } from "../../common/SourcifyEventManager/Sourcify
 import { logger } from "../../common/loggerLoki";
 import { getAddress } from "ethers";
 import {ContractDAO, ContractDB} from "./ContractDAO";
+import {getContractType} from "./../contractClassification";
 
 /**
  * A type for specifying the match quality of files.
@@ -453,7 +454,6 @@ export class RepositoryService implements IRepositoryService {
   public async storeMatch(
     contract: CheckedContract,
     match: Match
-
   ): Promise<void | Match> {
     if (
       match.address &&
@@ -468,10 +468,14 @@ export class RepositoryService implements IRepositoryService {
         });
 
         try{
+          const metadata = JSON.parse(contract.metadataRaw);
+          const contractType = getContractType(metadata.output.abi);
+
+
           const buff = Buffer.from(contract.metadataRaw);
           const metadataBase64 = buff.toString('base64');
 
-          await this.contractDAO?.verifiedContract(match.address, true, metadataBase64);
+          await this.contractDAO?.verifiedContract(match.address, true, metadataBase64, contractType);
         }catch (e) {
           logger.error({
             labels: { event: `checkByChainAndAddress - storingMode db`, level: "debug" },
