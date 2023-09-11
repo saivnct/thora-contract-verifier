@@ -15,6 +15,9 @@ RUN npm install && npx lerna run build
 FROM node:20-alpine3.17 as runner
 ENV NODE_ENV=production
 
+#Fix Docker Alpine cannot execute binary solc
+RUN apk add gcompat
+
 COPY --from=builder /home/app /home/app
 WORKDIR /home/app
 
