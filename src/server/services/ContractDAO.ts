@@ -57,14 +57,14 @@ export class ContractDAO implements IContractDAO {
             result = await this.dbPool.query('UPDATE contracts SET ' +
                 '"verified" = $2, ' +
                 '"metadata"= $3, ' +
-                '"ctrtype"= $4 ' +
+                '"contracttype"= $4 ' +
                 'WHERE contract = $1',
                 [address, false, "", ""]);
         }else{
             result = await this.dbPool.query('UPDATE contracts SET ' +
                 '"verified" = $2, ' +
                 '"metadata"= $3, ' +
-                '"ctrtype"= $4 ' +
+                '"contracttype"= $4 ' +
                 'WHERE contract = $1',
                 [address, true, metadataBase64, contractType]);
         }
